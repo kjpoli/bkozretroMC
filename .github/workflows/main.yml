@@ -30,7 +30,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: release-${{ steps.date.outputs.DATE }}-${{ steps.sha.outputs.SHA }}
-          name: Auto Release ${{ steps.date.outputs.DATE }} (${{ steps.sha.outputs.SHA }})
+          name: BKOZ-retroMC-${{ steps.date.outputs.DATE }}-(${{ steps.sha.outputs.SHA }})
           draft: false
           prerelease: false
           generate_release_notes: true
