@@ -1,12 +1,9 @@
 name: Auto-Release on Commit
-
 on:
   push:
     branches: [ main ]
-
 permissions:
   contents: write
-
 jobs:
   auto-release:
     runs-on: ubuntu-latest
@@ -30,13 +27,9 @@ jobs:
           # (excluding .git and other unnecessary files)
           zip -r ../bkoz-retroMC-distrib.zip . -x "*.git*" ".github/*"
         
-      - name: Delete existing 'latest' tag if it exists
-        run: |
-          git push origin :refs/tags/latest || true
-        continue-on-error: true
-      
-      - name: Create Release
-        id: create_release
+      # First create the version-specific release
+      - name: Create Versioned Release
+        id: create_versioned_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: release-${{ steps.date.outputs.DATE }}-${{ steps.sha.outputs.SHA }}
@@ -48,7 +41,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Add 'latest' tag
+      # Delete existing 'latest' tag and release if they exist
+      - name: Delete existing 'latest' tag and release
         run: |
-          git tag -f latest
-          git push -f origin latest
+          git push origin :refs/tags/latest || true
+          # The above might fail if the tag doesn't exist yet, which is fine
+        continue-on-error: true
+      
+      # Now create a separate 'latest' release with the same files
+      - name: Create Latest Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: BKOZ-retroMC-Latest
+          draft: false
+          prerelease: false
+          body: "This is always the latest release. See versioned releases for detailed release notes."
+          files: ../bkoz-retroMC-distrib.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
