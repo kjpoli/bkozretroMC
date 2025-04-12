@@ -2,7 +2,10 @@ name: Auto-Release on Commit
 
 on:
   push:
-    branches: [ main ] 
+    branches: [ main ]
+
+permissions:
+  contents: write
 
 jobs:
   auto-release:
@@ -21,19 +24,27 @@ jobs:
         id: sha
         run: echo "SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
         
+      - name: Create custom zip without top-level folder
+        run: |
+          # Create zip directly from the contents of the current directory
+          # (excluding .git and other unnecessary files)
+          zip -r ../bkoz-retroMC-distrib.zip . -x "*.git*" ".github/*"
+        
       - name: Delete existing 'latest' tag if it exists
         run: |
           git push origin :refs/tags/latest || true
         continue-on-error: true
       
       - name: Create Release
+        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: release-${{ steps.date.outputs.DATE }}-${{ steps.sha.outputs.SHA }}
-          name: BKOZ-retroMC-${{ steps.date.outputs.DATE }}-(${{ steps.sha.outputs.SHA }})
+          name: BKOZ-retroMC-${{ steps.sha.outputs.SHA }}
           draft: false
           prerelease: false
           generate_release_notes: true
+          files: ../bkoz-retroMC-distrib.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
